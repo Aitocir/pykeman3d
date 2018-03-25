@@ -123,23 +123,23 @@ class Pykeman3d:
         self.camerainfo = controller.camera_setup()
         self.cache = {}
         lastframe = time.time()
-        t = -1
         secstart = time.time()
         frame_count = 0
         while True:
-            t += 1
             #
             #  gather input
             #
             self.process_input(controller)
+            
             #
             #  update model
             #
             thisframe = time.time()
             controller.update(thisframe-lastframe)
             lastframe = thisframe
+            
             #
-            #  refresh drawing cache
+            #  re-establish camera location
             #
             draw_dist = controller.draw_distances()
             camera_pos = controller.camera_pos()
@@ -147,15 +147,12 @@ class Pykeman3d:
             thetaV = controller.camera_angle_vertical()
             camera_tile = [math.floor(x) for x in camera_pos]
             coords = self.spiral_range(draw_dist, *camera_tile)
-            for c in coords:
-                if (c not in self.cache) or (controller.stale_at_coord(*c)):
-                    self.cache[c] = controller.shapes_at_coord(*c)
             for c in set(self.cache.keys()).difference(set(coords)):
                 self.cache.pop(c)
+                
             #
-            #  draw the cache
+            #  update/draw the cache
             #
-            
             glMatrixMode(GL_PROJECTION)
             glLoadIdentity()
             gluPerspective(*controller.camera_setup())
@@ -166,19 +163,21 @@ class Pykeman3d:
             glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
             
             glMatrixMode(GL_MODELVIEW)
-            visible_coords = coords
-            shape_count = 0
-            for coord in visible_coords:
-                glPushMatrix()
-                glTranslate(coord[0], coord[1], coord[2])
-                for shape in self.cache[coord]:
-                    glCallList(self.shapelists[shape])
-                    shape_count += self.shape_polycounts[shape]
-                glPopMatrix()
+            poly_count = 0
+            for c in coords:
+                if (c not in self.cache) or (controller.stale_at_coord(*c)):
+                    self.cache[c] = controller.shapes_at_coord(*c)
+                if len(self.cache[c]):
+                    glPushMatrix()
+                    glTranslate(c[0], c[1], c[2])
+                    for shape in self.cache[c]:
+                        glCallList(self.shapelists[shape])
+                        poly_count += self.shape_polycounts[shape]
+                    glPopMatrix()
             
             frame_count += 1
             if debug and time.time() >= secstart+1:
-                print('{0}\t{1}\t{2}'.format(frame_count, shape_count, '({0:.2f}, {1:.2f}, {2:.2f})'.format(*camera_pos)))
+                print('{0}\t{1}\t{2}'.format(frame_count, poly_count, '({0:.2f}, {1:.2f}, {2:.2f})'.format(*camera_pos)))
                 secstart = time.time()
                 frame_count = 0
             pygame.display.flip()
