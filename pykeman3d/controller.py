@@ -11,9 +11,9 @@ class Pykeman3dController:
     def update(self, dt):
         pass   #  intended to use as a model updater based on elapsed time since last call (once per frame)
     def load_textures(self):
-        #  return list of list of textures, the size of the textures, and their count
+        #  return list of list of images to be used as textures
         import pygame
-        return [pygame.image.fromstring(bytes([255,0,255,255]*4), (2,2), 'RGBA')], 2, 1
+        return [pygame.image.fromstring(bytes([255,0,255,255]*4), (2,2), 'RGBA')]
     def input_button(self, button_name, button_value):
         pass
     def input_axis(self, axis_name, axis_value):
@@ -21,11 +21,13 @@ class Pykeman3dController:
     def camera_pos(self):
         return (0,0,0)
     def draw_distances(self):
-        return (5,5,5)
-    def stale_at_coord(self, x, y, z):
+        return (5,5)
+    def stale_at_coord(self, x, y):
         return False
-    def shapes_at_coord(self, x, y, z):
+    def shapes_at_coord(self, x, y):
         return []
+    def ground_at_coord(self, x, y):
+        return (0, 0.1, 1.0, 0.1)
     def camera_angle_horizontal(self):
         return 0.0
     def camera_angle_vertical(self):
